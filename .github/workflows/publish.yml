@@ -13,13 +13,11 @@ jobs:
       - name: Extract version from Changes.md
         id: get_version
         run: |
-          VERSION=$(awk '/^[0-9]+\.[0-9]+\.[0-9]+/ { print $1; exit }' Changes.md)
+          VERSION=v$(grep -oE '^##[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+' Changes.md | head -n1 | sed 's/^##[[:space:]]*//')
           if [ -z "$VERSION" ]; then
             echo "No version found in Changes.md" >&2
-            exit 1
           fi
-          VERSION="v$VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Extracted version: $VERSION"
 
       - name: Create git tag if not exists
@@ -37,6 +35,7 @@ jobs:
 
   release:
     name: Release - ${{ matrix.platform.os-name }}
+    needs: tag
     strategy:
       matrix:
         platform:
