@@ -89,3 +89,4 @@ jobs:
         with:
           executable-name: ecc
           target: ${{ matrix.platform.target }}
+          _force-release-for-testing: true
