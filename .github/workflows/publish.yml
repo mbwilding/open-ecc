@@ -45,12 +45,12 @@ jobs:
       - name: Install OpenSSL dependencies on Ubuntu
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev pkg-config
-          pkg-config --libs openssl
+          # sudo apt-get update
+          # sudo apt-get install -y libssl-dev pkg-config
+          # pkg-config --libs openssl
           echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
-          echo "OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu" >> $GITHUB_ENV
-          echo "OPENSSL_INCLUDE_DIR=/usr/include/openssl" >> $GITHUB_ENV
+          echo "OPENSSL_LIB_DIR=$(pkg-config --variable=libdir openssl)" >> $GITHUB_ENV
+          echo "OPENSSL_INCLUDE_DIR=$(pkg-config --variable=includedir openssl)" >> $GITHUB_ENV
 
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v1
