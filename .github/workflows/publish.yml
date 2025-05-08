@@ -24,18 +24,14 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Extracted version: $VERSION"
 
-      - name: Create git tag if not exists
+      - name: Create git tag
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           TAG="v${{ steps.get_version.outputs.version }}"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists. Skipping tag creation"
-          else
-            git tag "$TAG"
-            git push origin "$TAG"
-            echo "Tag $TAG created and pushed"
-          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "Tag $TAG created and pushed"
 
   release:
     name: Release - ${{ matrix.platform.os-name }}
