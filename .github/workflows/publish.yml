@@ -24,23 +24,23 @@ jobs:
       matrix:
         platform:
           - os_name: freebsd-x86_64
-            os: ubuntu-latest
+            os: ubuntu-20.04
             target: x86_64-unknown-freebsd
             bin: ecc
             name: ecc-freebsd-x86_64.tar.gz
             skip_tests: true
           - os_name: linux-x86_64
-            os: ubuntu-latest
+            os: ubuntu-20.04
             target: x86_64-unknown-linux-musl
             bin: ecc
             name: ecc-linux-x86_64-musl.tar.gz
           - os_name: linux-aarch64
-            os: ubuntu-latest
+            os: ubuntu-20.04
             target: aarch64-unknown-linux-musl
             bin: ecc
             name: ecc-linux-aarch64-musl.tar.gz
           - os_name: linux-arm
-            os: ubuntu-latest
+            os: ubuntu-20.04
             target: arm-unknown-linux-musleabi
             bin: ecc
             name: ecc-linux-arm-musl.tar.gz
