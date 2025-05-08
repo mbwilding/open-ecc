@@ -1,0 +1,148 @@
+name: Tests and Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+env:
+  MAJOR: 1
+  MINOR: 0
+  CRATE_NAME: ecc
+  GITHUB_TOKEN: ${{ github.token }}
+  RUST_BACKTRACE: 1
+
+jobs:
+  test:
+    name: ${{ matrix.platform.os_name }} with rust ${{ matrix.toolchain }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os_name: freebsd-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-freebsd
+            bin: ecc
+            name: ecc-freebsd-x86_64.tar.gz
+            skip_tests: true
+          - os_name: linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            bin: ecc
+            name: ecc-linux-x86_64-musl.tar.gz
+          - os_name: linux-aarch64
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            bin: ecc
+            name: ecc-linux-aarch64-musl.tar.gz
+          - os_name: linux-arm
+            os: ubuntu-latest
+            target: arm-unknown-linux-musleabi
+            bin: ecc
+            name: ecc-linux-arm-musl.tar.gz
+          - os_name: windows-aarch64
+            os: windows-latest
+            target: aarch64-pc-windows-msvc
+            bin: ecc.exe
+            name: ecc-windows-aarch64.zip
+            skip_tests: true
+          - os_name: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: ecc.exe
+            name: ecc-windows-x86_64.zip
+          - os_name: macos-x86_64
+            os: macos-latest
+            target: x86_64-apple-darwin
+            bin: ecc
+            name: ecc-darwin-x86_64.tar.gz
+          - os_name: macos-aarch64
+            os: macos-latest
+            target: aarch64-apple-darwin
+            bin: ecc
+            name: ecc-darwin-aarch64.tar.gz
+            skip_tests: true
+        toolchain:
+          - stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo & target directories
+        uses: Swatinem/rust-cache@v2
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "jdoe@example.com"
+          git config --global user.name "J. Doe"
+
+      - name: Set version and tag
+        id: set_version
+        run: |
+          VERSION="v${{ env.MAJOR }}.${{ env.MINOR }}.${{ github.run_number }}"
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Version set to ${VERSION}"
+          # Optionally, tag the commit
+          git tag ${VERSION}
+        # This step runs only on releases; adjust your condition if necessary.
+        if: startsWith(github.ref, 'refs/heads/main')
+
+      - name: Install musl-tools on Linux
+        run: sudo apt-get update --yes && sudo apt-get install --yes musl-tools
+        if: contains(matrix.platform.name, 'musl')
+
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: "build"
+          target: ${{ matrix.platform.target }}
+          toolchain: ${{ matrix.toolchain }}
+          args: "--locked --release"
+          strip: true
+
+      - name: Run tests
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: "test"
+          target: ${{ matrix.platform.target }}
+          toolchain: ${{ matrix.toolchain }}
+          args: "--locked --release"
+        if: ${{ !matrix.platform.skip_tests }}
+
+      - name: Package as archive
+        shell: bash
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          if [[ "${{ matrix.platform.os }}" == "windows-latest" ]]; then
+            7z a ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          else
+            tar czvf ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          fi
+          cd -
+        if: |
+          matrix.toolchain == 'stable' &&
+          ( startsWith( github.ref, 'refs/heads/main' ) )
+
+      - name: Publish release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecc-${{ matrix.platform.os_name }}-${{ env.VERSION }}
+          path: "ecc-*"
+        if: matrix.toolchain == 'stable' && github.ref == 'refs/heads/main'
+
+      - name: Generate SHA-256
+        run: shasum -a 256 ${{ matrix.platform.name }}
+        if: |
+          matrix.toolchain == 'stable' &&
+          matrix.platform.os == 'macos-latest' &&
+          startsWith( github.ref, 'refs/heads/main' )
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: "ecc-*"
+        if: matrix.toolchain == 'stable' && startsWith( github.ref, 'refs/heads/main' )
