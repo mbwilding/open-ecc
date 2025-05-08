@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
 use config::{AppConfig, get_config_path, load_config, save_config};
-use ecc_api::{
+use open_ecc::{
     api::Ecc,
     contracts::{LightGet, LightPut, LightsPut},
 };
