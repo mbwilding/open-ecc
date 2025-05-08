@@ -9,10 +9,6 @@ jobs:
     strategy:
       matrix:
         platform:
-          - os-name: FreeBSD-x86_64
-            runs-on: ubuntu-24.04
-            target: x86_64-unknown-freebsd
-
           - os-name: Linux-x86_64
             runs-on: ubuntu-24.04
             target: x86_64-unknown-linux-musl
@@ -26,7 +22,7 @@ jobs:
             target: x86_64-pc-windows-msvc
 
           - os_name: Windows-aarch64
-            os: windows-latest
+            runs-on: windows-latest
             target: aarch64-pc-windows-msvc
 
           - os-name: macOS-x86_64
@@ -36,6 +32,10 @@ jobs:
           - os_name: macOS-aarch64
             runs-on: macOS-latest
             target: aarch64-apple-darwin
+
+          - os-name: FreeBSD-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-freebsd
 
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
