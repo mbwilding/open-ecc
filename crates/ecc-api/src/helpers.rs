@@ -1,9 +1,7 @@
-use crate::contracts::{AccessoryInfoGet, JsonErrors, Wifi};
-use anyhow::{Result, bail};
+use crate::contracts::{AccessoryInfoGet, Wifi};
+use anyhow::Result;
 use cipher::{BlockEncryptMut, KeyIvInit, block_padding::NoPadding};
 use rand::Rng;
-use reqwest::Response;
-use serde::de::DeserializeOwned;
 
 type Aes128Cbc = cbc::Encryptor<aes::Aes128>;
 
@@ -46,18 +44,6 @@ pub fn encrypt_wifi_payload(accessory_info: &AccessoryInfoGet, payload: &Wifi) -
         .expect("Encryption failure");
 
     Ok(encrypted_bytes.to_vec())
-}
-
-pub async fn deser_response<T>(response: Response) -> Result<T>
-where
-    T: DeserializeOwned,
-{
-    if response.status().is_success() {
-        Ok(response.json::<T>().await?)
-    } else {
-        let errors = response.json::<JsonErrors>().await?;
-        bail!("{:#?}", errors)
-    }
 }
 
 pub fn api_to_kelvin(api: u16) -> u16 {

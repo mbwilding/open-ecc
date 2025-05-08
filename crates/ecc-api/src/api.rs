@@ -3,7 +3,8 @@ use crate::{
         AccessoryInfoGet, AccessoryInfoPut, LightsGet, LightsPut, LightsSettingsGet,
         LightsSettingsPut, Wifi,
     },
-    helpers::{deser_response, encrypt_wifi_payload},
+    helpers::encrypt_wifi_payload,
+    serialization::deser_response,
 };
 use anyhow::Result;
 use reqwest::{

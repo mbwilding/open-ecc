@@ -1,3 +1,4 @@
+use crate::serialization::{option_temperature_handler, temperature_handler};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
@@ -204,49 +205,4 @@ pub struct JsonErrors {
 pub struct JsonError {
     pub message: String,
     pub code: i32,
-}
-
-mod temperature_handler {
-    use crate::helpers::{api_to_kelvin, kelvin_to_api};
-    use serde::{self, Deserialize, Deserializer, Serializer};
-
-    pub fn serialize<S>(temp: &u16, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u16(kelvin_to_api(*temp))
-    }
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<u16, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(api_to_kelvin(u16::deserialize(deserializer)?))
-    }
-}
-
-mod option_temperature_handler {
-    use crate::helpers::{api_to_kelvin, kelvin_to_api};
-    use serde::{Deserialize, Deserializer, Serializer};
-
-    pub fn serialize<S>(temp: &Option<u16>, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match temp {
-            Some(val) => {
-                let api_val = kelvin_to_api(*val);
-                serializer.serialize_some(&api_val)
-            }
-            None => serializer.serialize_none(),
-        }
-    }
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<u16>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let opt_api = Option::<u16>::deserialize(deserializer)?;
-        Ok(opt_api.map(api_to_kelvin))
-    }
 }
