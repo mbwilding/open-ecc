@@ -24,23 +24,23 @@ jobs:
       matrix:
         platform:
           - os_name: freebsd-x86_64
-            os: ubuntu-20.04
+            os: ubuntu-latest
             target: x86_64-unknown-freebsd
             bin: ecc
             name: ecc-freebsd-x86_64.tar.gz
             skip_tests: true
           - os_name: linux-x86_64
-            os: ubuntu-20.04
+            os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             bin: ecc
             name: ecc-linux-x86_64-musl.tar.gz
           - os_name: linux-aarch64
-            os: ubuntu-20.04
+            os: ubuntu-latest
             target: aarch64-unknown-linux-musl
             bin: ecc
             name: ecc-linux-aarch64-musl.tar.gz
           - os_name: linux-arm
-            os: ubuntu-20.04
+            os: ubuntu-latest
             target: arm-unknown-linux-musleabi
             bin: ecc
             name: ecc-linux-arm-musl.tar.gz
@@ -97,16 +97,16 @@ jobs:
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
-          command: "build"
+          command: build
           target: ${{ matrix.platform.target }}
           toolchain: ${{ matrix.toolchain }}
-          args: "--locked --release"
+          args: --locked --release
           strip: true
 
       - name: Run tests
         uses: houseabsolute/actions-rust-cross@v0
         with:
-          command: "test"
+          command: test
           target: ${{ matrix.platform.target }}
           toolchain: ${{ matrix.toolchain }}
           args: "--locked --release"
@@ -130,7 +130,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ecc-${{ matrix.platform.os_name }}-${{ env.VERSION }}
-          path: "ecc-*"
+          path: ecc-*
         if: matrix.toolchain == 'stable' && github.ref == 'refs/heads/main'
 
       - name: Generate SHA-256
@@ -144,5 +144,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: "ecc-*"
+          files: ecc-*
+          name: ${{ env.VERSION }}
         if: matrix.toolchain == 'stable' && startsWith( github.ref, 'refs/heads/main' )
