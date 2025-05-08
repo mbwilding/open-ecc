@@ -7,35 +7,8 @@ permissions:
   contents: write
 
 jobs:
-  tag:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Extract version from Changes.md
-        id: get_version
-        run: |
-          VERSION=$(grep -oE '^##[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+' Changes.md | head -n1 | sed 's/^##[[:space:]]*//')
-          if [ -z "$VERSION" ]; then
-            echo "No version found in Changes.md" >&2
-            exit 1
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Extracted version: $VERSION"
-
-      - name: Create git tag
-        run: |
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
-          TAG="v${{ steps.get_version.outputs.version }}"
-          git tag "$TAG"
-          git push origin "$TAG"
-          echo "Tag $TAG created and pushed"
-
   release:
     name: Release - ${{ matrix.platform.os-name }}
-    needs: tag
     strategy:
       matrix:
         platform:
@@ -85,4 +58,3 @@ jobs:
         with:
           executable-name: ecc
           target: ${{ matrix.platform.target }}
-          _force-release-for-testing: true
