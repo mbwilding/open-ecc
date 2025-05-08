@@ -4,6 +4,37 @@ on:
       - main
 
 jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from Changes.md
+        id: get_version
+        run: |
+          VERSION=$(awk '/^[0-9]+\.[0-9]+\.[0-9]+/ { print $1; exit }' Changes.md)
+          if [ -z "$VERSION" ]; then
+            echo "No version found in Changes.md" >&2
+            exit 1
+          fi
+          VERSION="v$VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Create git tag if not exists
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          TAG="v${{ steps.get_version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping tag creation."
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "Tag $TAG created and pushed."
+          fi
+
   release:
     name: Release - ${{ matrix.platform.os-name }}
     strategy:
