@@ -18,6 +18,6 @@ TAG="v${VERSION}"
 git add .
 git commit -m "Release ${TAG}"
 git tag "${TAG}"
-git push
+git push --follow-tags
 
 echo "Created commit with tag ${TAG}"
