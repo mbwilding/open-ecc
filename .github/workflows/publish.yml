@@ -42,21 +42,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # - name: Set OpenSSL environment variables on Ubuntu
-      #   if: runner.os == 'Linux'
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y libssl-dev pkg-config
-      #     echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
-      #     echo "OPENSSL_INCLUDE_DIR=/usr/include/openssl" >> $GITHUB_ENV
-      #     echo "OPENSSL_LIB_DIR=/usr/lib" >> $GITHUB_ENV
-
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v1
         with:
           command: build
           target: ${{ matrix.platform.target }}
-          args: "--locked --release"
+          args: "--locked --release --bin ecc-cli"
           strip: true
 
       - name: Publish artifacts and release
