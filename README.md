@@ -11,3 +11,13 @@ Open ECC provides both a command-line interface and a programmatic API to contro
 - Cross-platform support (Windows, macOS, Linux, FreeBSD)
 - CLI for quick control and scripting
 - Easy-to-use configuration and commands
+
+## CLI
+
+### Install
+
+`cargo install open_ecc_cli`
+
+### Usage
+
+`ecc --help`
