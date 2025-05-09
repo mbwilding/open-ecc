@@ -1,6 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["crates/open_ecc", "crates/open_ecc_cli"]
+members = [
+    "crates/open_ecc",
+    "crates/open_ecc_cli",
+    "crates/open_ecc_gui",
+]
 
 [workspace.package]
 version = "0.0.5"
