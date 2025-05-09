@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Ok, Result, anyhow};
 use clap::{Parser, Subcommand};
 use config::{AppConfig, get_config_path, load_config, save_config};
 use open_ecc::{
@@ -19,16 +19,10 @@ struct Args {
 enum Commands {
     /// Set the brightness level
     #[command(visible_alias = "b")]
-    Brightness {
-        #[arg(short, long)]
-        value: u8,
-    },
+    Brightness { value: u8 },
     /// Set the temperature
     #[command(visible_alias = "k")]
-    Temperature {
-        #[arg(short, long)]
-        value: u16,
-    },
+    Temperature { value: u16 },
     /// Toggle the current state of the light
     #[command(visible_alias = "t")]
     Toggle,
@@ -87,21 +81,21 @@ async fn main() -> Result<()> {
         }
         Commands::Toggle => {
             process_lights(&ecc, &endpoints, |light| LightPut {
-                on: Some(light.on ^ 1),
+                on: Some(!light.on),
                 ..Default::default()
             })
             .await?;
         }
         Commands::On => {
             process_lights(&ecc, &endpoints, |_| LightPut {
-                on: Some(1),
+                on: Some(true),
                 ..Default::default()
             })
             .await?;
         }
         Commands::Off => {
             process_lights(&ecc, &endpoints, |_| LightPut {
-                on: Some(0),
+                on: Some(false),
                 ..Default::default()
             })
             .await?;
@@ -117,10 +111,15 @@ where
     F: Fn(LightGet) -> LightPut,
 {
     for endpoint in endpoints {
-        let lights = ecc.lights_get(endpoint).await?;
-        let lights_put = lights.lights.into_iter().map(&f).collect::<Vec<_>>();
-        ecc.lights_put(endpoint, &LightsPut { lights: lights_put })
-            .await?;
+        // This prevents errors breaking the loop
+        let _ = async {
+            let lights = ecc.lights_get(endpoint).await?;
+            let lights_put = lights.lights.into_iter().map(&f).collect::<Vec<_>>();
+            ecc.lights_put(endpoint, &LightsPut { lights: lights_put })
+                .await?;
+            Ok(())
+        }
+        .await;
     }
     Ok(())
 }

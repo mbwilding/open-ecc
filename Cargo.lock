@@ -2216,6 +2216,7 @@ dependencies = [
  "egui",
  "env_logger",
  "log",
+ "open_ecc",
  "serde",
  "wasm-bindgen-futures",
  "web-sys",
