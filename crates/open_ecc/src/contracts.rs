@@ -19,17 +19,20 @@ pub struct LightsPut {
 #[derive(Debug, Default, Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub struct LightGet {
+    /// State
     #[serde(with = "u8_bool_handler")]
     pub on: bool,
+    /// Brightness
     pub brightness: u8,
     #[serde(with = "temperature_handler")]
+    /// Range: 2900 - 7000 Kelvin
     pub temperature: u16,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 pub struct LightPut {
-    /// State: 0 | 1
+    /// State
     #[serde(
         skip_serializing_if = "Option::is_none",
         with = "u8_bool_option_handler"
@@ -38,7 +41,7 @@ pub struct LightPut {
     /// Range: 0 - 100
     #[serde(skip_serializing_if = "Option::is_none")]
     pub brightness: Option<u8>,
-    /// Range: 2900 - 7000 (increments of 50)
+    /// Range: 2900 - 7000 Kelvin
     #[serde(
         skip_serializing_if = "Option::is_none",
         with = "temperature_option_handler"

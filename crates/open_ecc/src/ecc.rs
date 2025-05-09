@@ -31,12 +31,7 @@ impl Default for Ecc {
 }
 
 impl Ecc {
-    fn format_url(&self, endpoint: &str) -> String {
-        format!(
-            "{}://{}:{}{}",
-            self.protocol, endpoint, self.port, self.namespace
-        )
-    }
+    // Public
 
     pub async fn wifi_config(&self, endpoint: &str, payload: &WifiConfig) -> Result<()> {
         let accessory_info = self.accessory_info_get(endpoint).await?;
@@ -106,5 +101,14 @@ impl Ecc {
         let url = format!("{}/accessory-info", self.format_url(endpoint));
         self.client.put(&url).json(payload).send().await?;
         Ok(())
+    }
+
+    // Private
+
+    fn format_url(&self, endpoint: &str) -> String {
+        format!(
+            "{}://{}:{}{}",
+            self.protocol, endpoint, self.port, self.namespace
+        )
     }
 }

@@ -3,7 +3,7 @@ use anyhow::{Result, bail};
 use reqwest::Response;
 use serde::de::DeserializeOwned;
 
-pub async fn deser_response<T>(response: Response) -> Result<T>
+pub(crate) async fn deser_response<T>(response: Response) -> Result<T>
 where
     T: DeserializeOwned,
 {
@@ -15,7 +15,7 @@ where
     }
 }
 
-pub mod u8_bool_handler {
+pub(crate) mod u8_bool_handler {
     use serde::{Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
@@ -34,7 +34,7 @@ pub mod u8_bool_handler {
     }
 }
 
-pub mod u8_bool_option_handler {
+pub(crate) mod u8_bool_option_handler {
     use serde::{Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S>(value: &Option<bool>, serializer: S) -> Result<S::Ok, S::Error>
@@ -55,7 +55,7 @@ pub mod u8_bool_option_handler {
     }
 }
 
-pub mod temperature_handler {
+pub(crate) mod temperature_handler {
     use crate::helpers::{api_to_kelvin, kelvin_to_api};
     use serde::{self, Deserialize, Deserializer, Serializer};
 
@@ -74,7 +74,7 @@ pub mod temperature_handler {
     }
 }
 
-pub mod temperature_option_handler {
+pub(crate) mod temperature_option_handler {
     use crate::helpers::{api_to_kelvin, kelvin_to_api};
     use serde::{Deserialize, Deserializer, Serializer};
 
