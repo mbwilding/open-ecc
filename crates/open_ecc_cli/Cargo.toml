@@ -1,5 +1,5 @@
 [package]
-name = "ecc_cli"
+name = "open_ecc_cli"
 description = "Unofficial Elgato Command Centre CLI"
 version.workspace = true
 authors.workspace = true
