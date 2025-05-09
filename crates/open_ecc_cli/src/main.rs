@@ -18,22 +18,28 @@ struct Args {
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// Set the brightness level
+    #[command(visible_alias = "b")]
     Brightness {
         #[arg(short, long)]
         value: u8,
     },
     /// Set the temperature
+    #[command(visible_alias = "k")]
     Temperature {
         #[arg(short, long)]
         value: u16,
     },
     /// Toggle the current state of the light
+    #[command(visible_alias = "t")]
     Toggle,
     /// Turn the light on
+    #[command(visible_alias = "1")]
     On,
     /// Turn the light off
+    #[command(visible_alias = "0")]
     Off,
     /// Set endpoints by providing space seperated IPs or host names
+    #[command(visible_alias = "e")]
     Endpoints {
         /// Endpoints to save in config
         endpoints: Vec<String>,
