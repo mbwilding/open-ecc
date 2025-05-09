@@ -2,26 +2,7 @@
 
 set -e
 
-if [ ! -f Changes.md ]; then
-    echo "Changes.md not found"
-    exit 1
-fi
-
-VERSION=$(grep "^##" Changes.md | head -n 1 | sed -E 's/^##[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-if [ -z "$VERSION" ]; then
-    echo "Version not found in Changes.md"
-    exit 1
-fi
-
-sed -i '' -E "s/^(version[[:space:]]*=[[:space:]]*\")[0-9]+\.[0-9]+\.[0-9]+(\")/\1$VERSION\2/" Cargo.toml
-if [ $? -ne 0 ]; then
-    echo "Failed to update Cargo.toml"
-    exit 1
-fi
-echo "Cargo.toml version updated to $VERSION"
-cargo generate-lockfile
-
-TAG="v${VERSION}"
+./patch.sh
 
 if git rev-parse "refs/tags/${TAG}" >/dev/null 2>&1; then
   echo "Error: Tag ${TAG} already exists." >&2
