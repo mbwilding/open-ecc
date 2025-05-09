@@ -1,10 +1,11 @@
 use anyhow::{Ok, Result, anyhow};
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use config::{AppConfig, get_config_path, load_config, save_config};
 use open_ecc::{
-    api::Ecc,
-    contracts::{LightGet, LightPut, LightsPut},
+    contracts::{LightGet, LightPut, LightsPut, WifiConfig},
+    ecc::Ecc,
 };
+use serde::{Deserialize, Serialize};
 
 mod config;
 
@@ -38,6 +39,28 @@ enum Commands {
         /// Endpoints to save in config
         endpoints: Vec<String>,
     },
+    /// Configure WiFi settings
+    #[command(visible_alias = "w")]
+    Wifi {
+        /// WiFi SSID
+        #[arg(long)]
+        ssid: String,
+        /// Passphrase, if any
+        #[arg(long)]
+        passphrase: Option<String>,
+        /// Security type
+        #[arg(long, value_enum)]
+        security: WifiSecurity,
+        /// Channel [range: 1-14]
+        #[arg(long)]
+        channel: Option<u8>,
+    },
+}
+
+#[derive(ValueEnum, Debug, Clone, Serialize, Deserialize)]
+enum WifiSecurity {
+    None,
+    Wpa,
 }
 
 #[tokio::main]
@@ -99,6 +122,26 @@ async fn main() -> Result<()> {
                 ..Default::default()
             })
             .await?;
+        }
+        Commands::Wifi {
+            ssid,
+            passphrase,
+            security,
+            channel,
+        } => {
+            let wifi_config = WifiConfig {
+                ssid,
+                passphrase,
+                security_type: match security {
+                    WifiSecurity::None => open_ecc::contracts::WifiSecurity::None,
+                    WifiSecurity::Wpa => open_ecc::contracts::WifiSecurity::WpaOrWpa2Personal,
+                },
+                channel,
+            };
+            for endpoint in endpoints {
+                // Discard prevents errors breaking the loop
+                _ = ecc.wifi_config(&endpoint, &wifi_config).await;
+            }
         }
         _ => {}
     }

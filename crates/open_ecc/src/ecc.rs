@@ -1,7 +1,7 @@
 use crate::{
     contracts::{
         AccessoryInfoGet, AccessoryInfoPut, LightsGet, LightsPut, LightsSettingsGet,
-        LightsSettingsPut, Wifi,
+        LightsSettingsPut, WifiConfig,
     },
     helpers::encrypt_wifi_payload,
     serialization::deser_response,
@@ -38,7 +38,7 @@ impl Ecc {
         )
     }
 
-    pub async fn wifi_put(&self, endpoint: &str, payload: &Wifi) -> Result<()> {
+    pub async fn wifi_config(&self, endpoint: &str, payload: &WifiConfig) -> Result<()> {
         let accessory_info = self.accessory_info_get(endpoint).await?;
         let encrypted_bytes = encrypt_wifi_payload(&accessory_info, payload)?;
         let url = format!("{}/wifi-info", self.format_url(endpoint));

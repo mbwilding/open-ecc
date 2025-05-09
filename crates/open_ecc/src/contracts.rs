@@ -183,7 +183,7 @@ pub struct BtInfo {
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
-pub struct Wifi {
+pub struct WifiConfig {
     #[serde(rename = "SSID")]
     pub ssid: String,
     #[serde(rename = "Passphrase", skip_serializing_if = "Option::is_none")]
