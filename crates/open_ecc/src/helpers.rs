@@ -1,4 +1,4 @@
-use crate::contracts::{AccessoryInfoGet, Wifi};
+use crate::contracts::{AccessoryInfoGet, WifiConfig};
 use anyhow::Result;
 use cipher::{BlockEncryptMut, KeyIvInit, block_padding::NoPadding};
 use rand::Rng;
@@ -24,7 +24,10 @@ fn get_encryption_key(data: &AccessoryInfoGet) -> String {
     )
 }
 
-pub fn encrypt_wifi_payload(accessory_info: &AccessoryInfoGet, payload: &Wifi) -> Result<Vec<u8>> {
+pub fn encrypt_wifi_payload(
+    accessory_info: &AccessoryInfoGet,
+    payload: &WifiConfig,
+) -> Result<Vec<u8>> {
     let mut bytes_array = serde_json::to_vec_pretty(payload).expect("Failed to serialize JSON");
     add_padding(&mut bytes_array);
     let random_array = random_prefix();

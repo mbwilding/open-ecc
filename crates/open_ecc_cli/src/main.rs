@@ -1,126 +1,72 @@
-use anyhow::{Result, anyhow};
-use clap::{Parser, Subcommand};
-use config::{AppConfig, get_config_path, load_config, save_config};
-use open_ecc::{
-    api::Ecc,
-    contracts::{LightGet, LightPut, LightsPut},
-};
+use crate::args::{Args, Commands};
+use anyhow::Result;
+use args::WifiSecurity;
+use clap::Parser;
+use config::init;
+use open_ecc::{contracts::WifiConfig, ecc::Ecc, light::Light};
 
+mod args;
 mod config;
-
-#[derive(clap::Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    #[command(subcommand)]
-    command: Commands,
-}
-
-#[derive(Subcommand, Debug)]
-enum Commands {
-    /// Set the brightness level
-    #[command(visible_alias = "b")]
-    Brightness {
-        #[arg(short, long)]
-        value: u8,
-    },
-    /// Set the temperature
-    #[command(visible_alias = "k")]
-    Temperature {
-        #[arg(short, long)]
-        value: u16,
-    },
-    /// Toggle the current state of the light
-    #[command(visible_alias = "t")]
-    Toggle,
-    /// Turn the light on
-    #[command(visible_alias = "1")]
-    On,
-    /// Turn the light off
-    #[command(visible_alias = "0")]
-    Off,
-    /// Set endpoints by providing space seperated IPs or host names
-    #[command(visible_alias = "e")]
-    Endpoints {
-        /// Endpoints to save in config
-        endpoints: Vec<String>,
-    },
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-
-    if let Commands::Endpoints { endpoints } = args.command {
-        let config_path = get_config_path()?;
-        let mut config: AppConfig = load_config(&config_path)?;
-        config.endpoints = Some(endpoints);
-        save_config(&config, &config_path)?;
-        return Ok(());
-    }
-
-    let config_path = get_config_path()?;
-    let config: AppConfig = load_config(&config_path)?;
-    let endpoints = config.endpoints.ok_or_else(|| {
-        anyhow!(
-            "No endpoints defined in the configuration\n\
-            Please set endpoints using command: ecc endpoints\n\
-            For example: ecc endpoints 192.168.0.50 192.168.0.51"
-        )
-    })?;
+    let endpoints = init(&args)?;
+    let endpoints = match endpoints {
+        Some(e) => e,
+        None => return Ok(()),
+    };
 
     let ecc = Ecc::default();
+    let lights = endpoints.iter().map(|endpoint| Light::new(&ecc, endpoint));
 
     match args.command {
         Commands::Brightness { value } => {
-            process_lights(&ecc, &endpoints, |_| LightPut {
-                brightness: Some(value),
-                ..Default::default()
-            })
-            .await?;
+            for light in lights {
+                _ = light.brightness_set(value).await;
+            }
         }
         Commands::Temperature { value } => {
-            process_lights(&ecc, &endpoints, |_| LightPut {
-                temperature: Some(value),
-                ..Default::default()
-            })
-            .await?;
+            for light in lights {
+                _ = light.temperature_set(value).await;
+            }
         }
         Commands::Toggle => {
-            process_lights(&ecc, &endpoints, |light| LightPut {
-                on: Some(light.on ^ 1),
-                ..Default::default()
-            })
-            .await?;
+            for light in lights {
+                _ = light.toggle().await;
+            }
         }
         Commands::On => {
-            process_lights(&ecc, &endpoints, |_| LightPut {
-                on: Some(1),
-                ..Default::default()
-            })
-            .await?;
+            for light in lights {
+                _ = light.on().await;
+            }
         }
         Commands::Off => {
-            process_lights(&ecc, &endpoints, |_| LightPut {
-                on: Some(0),
-                ..Default::default()
-            })
-            .await?;
+            for light in lights {
+                _ = light.off().await;
+            }
+        }
+        Commands::Wifi {
+            ssid,
+            passphrase,
+            security,
+            channel,
+        } => {
+            let wifi_config = WifiConfig {
+                ssid,
+                passphrase,
+                security_type: match security {
+                    WifiSecurity::None => open_ecc::contracts::WifiSecurity::None,
+                    WifiSecurity::Wpa => open_ecc::contracts::WifiSecurity::WpaOrWpa2Personal,
+                },
+                channel,
+            };
+            for endpoint in endpoints {
+                _ = ecc.wifi_config(&endpoint, &wifi_config).await;
+            }
         }
         _ => {}
     }
 
-    Ok(())
-}
-
-async fn process_lights<F>(ecc: &Ecc, endpoints: &[String], f: F) -> Result<()>
-where
-    F: Fn(LightGet) -> LightPut,
-{
-    for endpoint in endpoints {
-        let lights = ecc.lights_get(endpoint).await?;
-        let lights_put = lights.lights.into_iter().map(&f).collect::<Vec<_>>();
-        ecc.lights_put(endpoint, &LightsPut { lights: lights_put })
-            .await?;
-    }
     Ok(())
 }

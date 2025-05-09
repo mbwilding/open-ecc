@@ -1,4 +1,5 @@
-pub mod api;
 pub mod contracts;
-pub mod helpers;
-pub mod serialization;
+pub mod ecc;
+pub(crate) mod helpers;
+pub mod light;
+pub(crate) mod serialization;
