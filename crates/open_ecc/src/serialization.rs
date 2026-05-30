@@ -3,6 +3,8 @@ use anyhow::{Result, bail};
 use reqwest::Response;
 use serde::de::DeserializeOwned;
 
+/// Deserialise a successful API response into `T`, or bail with the
+/// device's error payload on non-2xx status codes.
 pub(crate) async fn deser_response<T>(response: Response) -> Result<T>
 where
     T: DeserializeOwned,
@@ -15,6 +17,10 @@ where
     }
 }
 
+/// Serde module for fields that are `bool` on the Rust side but `u8`
+/// (0 = false, non-zero = true) on the wire.
+///
+/// Use as `#[serde(with = "u8_bool_handler")]` on required `bool` fields.
 pub(crate) mod u8_bool_handler {
     use serde::{Deserialize, Deserializer, Serializer};
 
@@ -34,6 +40,11 @@ pub(crate) mod u8_bool_handler {
     }
 }
 
+/// Serde module for fields that are `Option<bool>` on the Rust side but
+/// `u8` (0/1) or absent on the wire.
+///
+/// Use as `#[serde(with = "u8_bool_option_handler")]` on `Option<bool>`
+/// fields that also carry `#[serde(skip_serializing_if = "Option::is_none")]`.
 pub(crate) mod u8_bool_option_handler {
     use serde::{Deserialize, Deserializer, Serializer};
 
@@ -55,6 +66,13 @@ pub(crate) mod u8_bool_option_handler {
     }
 }
 
+/// Serde module for required temperature fields.
+///
+/// Transparently converts between Kelvin (2900-7000) used throughout
+/// this crate and the device's internal unit (143-344) on the wire.
+///
+/// Use as `#[serde(with = "temperature_handler")]` on required `u16`
+/// temperature fields.
 pub(crate) mod temperature_handler {
     use crate::helpers::{api_to_kelvin, kelvin_to_api};
     use serde::{self, Deserialize, Deserializer, Serializer};
@@ -74,6 +92,14 @@ pub(crate) mod temperature_handler {
     }
 }
 
+/// Serde module for optional temperature fields.
+///
+/// Same Kelvin <-> device unit conversion as [`temperature_handler`] but
+/// for `Option<u16>` fields.
+///
+/// Use as `#[serde(with = "temperature_option_handler")]` on
+/// `Option<u16>` temperature fields that also carry
+/// `#[serde(skip_serializing_if = "Option::is_none")]`.
 pub(crate) mod temperature_option_handler {
     use crate::helpers::{api_to_kelvin, kelvin_to_api};
     use serde::{Deserialize, Deserializer, Serializer};

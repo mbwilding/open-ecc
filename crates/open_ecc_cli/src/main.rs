@@ -3,17 +3,25 @@ use anyhow::Result;
 use args::WifiSecurity;
 use clap::Parser;
 use config::init;
+use futures::future::join_all;
 use open_ecc::{contracts::WifiConfig, ecc::Ecc, light::Light};
 
 mod args;
 mod config;
 
+/// Entry point for the `ecc` binary.
+///
+/// Parses CLI arguments, resolves the configured device endpoints, then
+/// dispatches the requested command. All per-device operations are run
+/// concurrently using [`join_all`] so that commands complete in parallel
+/// rather than sequentially when multiple endpoints are configured.
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
     let endpoints = init(&args)?;
     let endpoints = match endpoints {
         Some(e) => e,
+        // The Endpoints subcommand saves config and exits; nothing more to do.
         None => return Ok(()),
     };
 
@@ -22,29 +30,19 @@ async fn main() -> Result<()> {
 
     match args.command {
         Commands::Brightness { value } => {
-            for light in lights {
-                _ = light.brightness_set(value).await;
-            }
+            join_all(lights.map(|light| async move { light.brightness_set(value).await })).await;
         }
         Commands::Temperature { value } => {
-            for light in lights {
-                _ = light.temperature_set(value).await;
-            }
+            join_all(lights.map(|light| async move { light.temperature_set(value).await })).await;
         }
         Commands::Toggle => {
-            for light in lights {
-                _ = light.toggle().await;
-            }
+            join_all(lights.map(|light| async move { light.toggle().await })).await;
         }
         Commands::On => {
-            for light in lights {
-                _ = light.on().await;
-            }
+            join_all(lights.map(|light| async move { light.on().await })).await;
         }
         Commands::Off => {
-            for light in lights {
-                _ = light.off().await;
-            }
+            join_all(lights.map(|light| async move { light.off().await })).await;
         }
         Commands::Wifi {
             ssid,
@@ -61,9 +59,12 @@ async fn main() -> Result<()> {
                 },
                 channel,
             };
-            for endpoint in endpoints {
-                _ = ecc.wifi_config(&endpoint, &wifi_config).await;
-            }
+            join_all(
+                endpoints
+                    .iter()
+                    .map(|endpoint| async { ecc.wifi_config(endpoint, &wifi_config).await }),
+            )
+            .await;
         }
         _ => {}
     }

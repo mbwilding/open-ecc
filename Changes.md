@@ -1,3 +1,9 @@
+## 0.0.7 - 2026-05-30
+
+- Parallelise light commands
+- Bump dependencies
+- Add documentation and README
+
 ## 0.0.6 - 2025-05-09
 
 - Update CLI

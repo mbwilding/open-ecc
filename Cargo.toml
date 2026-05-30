@@ -3,8 +3,7 @@ resolver = "2"
 members = ["crates/open_ecc", "crates/open_ecc_cli"]
 
 [workspace.package]
-version = "0.0.6"
-authors = ["Matthew Wilding <mbwilding@gmail.com>"]
+version = "0.0.7"
 repository = "https://github.com/mbwilding/open-ecc"
 edition = "2024"
 
