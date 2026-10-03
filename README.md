@@ -28,6 +28,31 @@ Devices are discovered by IP address or hostname and communicated with directly 
 cargo install open_ecc_cli
 ```
 
+### With Nix
+
+Run without installing:
+
+```bash
+nix run github:mbwilding/open-ecc
+```
+
+To install it from a flake-based NixOS or Home Manager setup, add the input and have it follow your `nixpkgs`:
+
+```nix
+inputs = {
+  open-ecc = {
+    url = "github:mbwilding/open-ecc";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+};
+```
+
+Then add `inputs.open-ecc.packages.${pkgs.stdenv.hostPlatform.system}.default` to `home.packages` or `environment.systemPackages`. An overlay is also exported as `inputs.open-ecc.overlays.default`, which adds `pkgs.open-ecc`.
+
+The flake reads the version from `Cargo.toml` and dependencies from `Cargo.lock`.
+
+For development, `nix develop` (or `direnv allow`) provides the Rust toolchain.
+
 ### Configure endpoints
 
 Before running any command, save the IP addresses or hostnames of your devices:
